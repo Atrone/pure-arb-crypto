@@ -225,7 +225,7 @@ def fetch_data(exchange_name, symbol, timeframe, since=None, limit=5):
     return df['close']
 
 # Function to simulate arbitrage
-def simulate_arbitrage(symbol, exchanges_pair, arbitrage_threshold, trade_size_usd):
+def simulate_arbitrage(symbol, exchanges_pair, trade_size_usd):
     """
     Simulate arbitrage between two exchanges based on the given symbol and trade size in USD.
     
@@ -309,18 +309,17 @@ def simulate_arbitrage(symbol, exchanges_pair, arbitrage_threshold, trade_size_u
             if usd_to_quote_rate != Decimal('0.0'):
                 net_profit_usd = net_profit * usd_to_quote_rate
                 logging.info(f"Net Profit in USD: {net_profit_usd:.5f} USD")
+                profit += float(net_profit_usd)
+                num_trades += 1
+                logging.info(f"{timestamp}: Buy on {buy_exchange_name} at {adjusted_buy_price:.5f} {quote_currency} "
+                                    f"(slippage: {buy_slippage * 100:.2f}%), Sell on {sell_exchange_name} at {adjusted_sell_price:.5f} {quote_currency} "
+                                    f"(slippage: {sell_slippage * 100:.2f}%). Net Profit: {net_profit_usd:.5f} USD")
             else:
                 logging.error("USD to quote currency rate is zero; cannot convert net profit to USD.")
         except Exception as e:
             logging.error(f"Error converting net profit to USD: {e}")
             net_profit_usd = Decimal('0.0')
 
-        profit += float(net_profit_usd)
-        num_trades += 1
-        logging.info(f"{timestamp}: Buy on {buy_exchange_name} at {adjusted_buy_price:.5f} {quote_currency} "
-                            f"(slippage: {buy_slippage * 100:.2f}%), Sell on {sell_exchange_name} at {adjusted_sell_price:.5f} {quote_currency} "
-                            f"(slippage: {sell_slippage * 100:.2f}%). Net Profit: {net_profit_usd:.5f} USD")
-    
     return profit, num_trades
 
 # Comprehensive report storage
@@ -329,7 +328,7 @@ report = {}
 # Run the arbitrage simulation for all matching pairs
 for symbol, exchange_pairs in matching_pairs.items():
     for exchange_pair in exchange_pairs:
-        total_profit, total_trades = simulate_arbitrage(symbol, exchange_pair, arbitrage_threshold, trade_size)
+        total_profit, total_trades = simulate_arbitrage(symbol, exchange_pair, trade_size)
         report[(symbol, exchange_pair)] = {'profit': total_profit, 'trades': total_trades}
 
 # Display comprehensive report
